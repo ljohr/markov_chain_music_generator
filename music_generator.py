@@ -1,68 +1,45 @@
+from calendar import c
 import mido
 
-current_path = "/Users/lilly/Documents/Final Project/"
+current_path = "/Users/lilly/Desktop/projects/markov_chain_music_generator/"
+new_track = current_path + "etude_op10_no3.mid"
 
 
-def main():
-    # name of new track
-    new_track = current_path + "etude_op10_no3.mid"
-    
+def clean_notes(track):
     # first position in tracks stores all data about notes played
     current_track = mido.MidiFile(new_track).tracks[1]
+    all_notes = []
 
-    # all track info about notes pressed is in the first track
-    # format = note on keyboard, 
-    markov_chain = dict()
-    for i in range(21, 108):
-        curr_note = "note_" + str(i)
-        markov_chain[curr_note] = []
-
+    # create an array containing all notes played in sequential order
     for m in current_track:
         msg = str(m)
-        curr_note = ""
         # add times into the dictionary 
         if 'note_on' in msg:
             # curr_note
-            if curr_note == "":
-                next_note = msg[msg.rfind('note') + 5:].split(' ')[0].split('=').pop()
-                curr_note = "note_" + str(next_note)
-                continue
-            # add count 
-            markov_chain[curr_note] = "hi"
-        print(markov_chain)
-            
-            # curr_note = "note_" + str(count)
-        # print(markov_chain)
-        # count += 1
-        # markov_chain['note']['time'] = msg[msg.rfind('time')+5:].split(' ')[0].split('=')
-        # print(markov_chain)
-        # print(markov_chain)
-# def parse_message(current_track):
-#     # for note in ()
-#     if 'note_on' in current_track:
-#         on = True
-#     elif 'note_off' in current_track:
-#         on = False
-#     else:
-#         on = None
-    
-#     result = current_track.rfind('time')
-#     print(result)
+            curr_note = msg[msg.rfind('note') + 5:].split(' ')[0].split('=').pop()
+            all_notes.append(curr_note)
+        # print(all_notes)
+    return all_notes
 
-# def make_chain():
+def make_markov(note_list, n_gram=2):
+    markov_chain = {}
+    for i in range(len(note_list)-n_gram-1):
+        curr_state, next_state = "", ""
+        for j in range(n_gram):
+            curr_state += note_list[i + j] + " "
+            next_state += note_list[i + j + 1] + " "
+        curr_state = curr_state[: -1]
+        next_state = next_state[: -1]
+        if curr_state not in markov_chain:
+            markov_chain[curr_state] = {}
+            markov_chain[curr_state][next_state] = 1
+        else:
+            if next_state in markov_chain[curr_state]:
+                markov_chain[curr_state][next_state] += 1
+            else:
+                markov_chain[curr_state][next_state] = 1
+    print(markov_chain)
 
 
-# def make_song(tempo=500000):
-    # mid_new = mido.MidiFile()
-    # new_song = mido.MidiTrack()
-    # mid_new.tracks.append(new_song)
-    # new_song.append(mido.MetaMessage('set_tempo', tempo=50000, time = 0))
-    # new_song.append(mido.Message('note_on', note=35, velocity=39, time=312))
-    # new_song.append(mido.Message('note_on', note=37, velocity=39, time=312))
-    # mid_new.save(current_path + 'mid_new.mid')
-
-
-main()
-
-
-# make_song()
+note_list = clean_notes(new_track)
+make_markov(note_list)
