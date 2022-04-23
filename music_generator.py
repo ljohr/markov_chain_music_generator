@@ -72,24 +72,29 @@ def generate_song(markov_chain, limit=total_notes/4):
         n += 1
     return new_song
 
-def make_new_midi(new_song, tempo):
+def make_new_midi(new_song, current_path, tempo):
     mid_new = mido.MidiFile()
-    new_song = mido.MidiTrack()
-    mid_new.tracks.append(new_song)
-    new_song.append(mido.MetaMessage('set_tempo', tempo=int(tempo)))
+    new_track = mido.MidiTrack()
+    mid_new.tracks.append(new_track)
+    new_track.append(mido.MetaMessage('set_tempo', tempo=int(tempo)))
 
-    for num in range(new_song):
+    for num in range(len(new_song)):
         a= new_song[num]
         print(a)
 
-    new_song.append(mido.Message('note_on', note=57, velocity=0, time = random.randint(0, 300)))
+    new_track.append(mido.Message('note_on', note=57, velocity=0, time = random.randint(0, 300)))
     mid_new.save(current_path + 'mid_new.mid')
 
-for i in range(1, 5):
-    new_track = current_path + "symphony_1_" + str(i) + ".mid"
-    note_list = clean_notes(new_track)
-    markov_chain = make_markov(note_list)
-    get_tempo(new_track)
+# for i in range(1, 5):
+#     new_track = current_path + "symphony_1_" + str(i) + ".mid"
+#     note_list = clean_notes(new_track)
+#     markov_chain = make_markov(note_list)
+#     get_tempo(new_track)
+
+new_track = current_path + "symphony_1_1.mid"
+note_list = clean_notes(new_track)
+markov_chain = make_markov(note_list)
+get_tempo(new_track)
 
 new_song = generate_song(markov_chain, total_notes)
-make_new_midi(new_song, tempo)
+make_new_midi(new_song, current_path, tempo)
