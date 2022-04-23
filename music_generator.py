@@ -79,10 +79,10 @@ def make_new_midi(new_song, current_path, tempo):
     new_track.append(mido.MetaMessage('set_tempo', tempo=int(tempo)))
 
     for num in range(len(new_song)):
-        a= new_song[num]
-        print(a)
-
-    new_track.append(mido.Message('note_on', note=57, velocity=0, time = random.randint(0, 300)))
+        current_notes = new_song[num].split(' ')
+        for note in current_notes:
+            new_track.append(mido.Message('note_on', note=int(note), velocity=0, time = random.randint(0, 300)))
+    
     mid_new.save(current_path + 'mid_new.mid')
 
 # for i in range(1, 5):
