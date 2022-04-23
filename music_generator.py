@@ -25,6 +25,7 @@ def clean_notes(track):
     for m in current_track:
         total_notes += 1
         msg = str(m)
+        # print(msg)
         # add times into the dictionary 
         if 'note_on' in msg:
             # curr_note
@@ -76,25 +77,22 @@ def make_new_midi(new_song, current_path, tempo):
     mid_new = mido.MidiFile()
     new_track = mido.MidiTrack()
     mid_new.tracks.append(new_track)
-    new_track.append(mido.MetaMessage('set_tempo', tempo=int(tempo)))
-
+    new_track.append(mido.MetaMessage('set_tempo', tempo=50000, time=0))
+    
     for num in range(len(new_song)):
         current_notes = new_song[num].split(' ')
         for note in current_notes:
-            new_track.append(mido.Message('note_on', note=int(note), velocity=0, time = random.randint(0, 300)))
+            new_track.append(mido.Message('note_on', note=int(note), velocity=random.randint(0, 50), time = random.randint(0, 474)))
     
+            
     mid_new.save(current_path + 'mid_new.mid')
 
-# for i in range(1, 5):
-#     new_track = current_path + "symphony_1_" + str(i) + ".mid"
-#     note_list = clean_notes(new_track)
-#     markov_chain = make_markov(note_list)
-#     get_tempo(new_track)
-
-new_track = current_path + "symphony_1_1.mid"
-note_list = clean_notes(new_track)
-markov_chain = make_markov(note_list)
-get_tempo(new_track)
+for i in range(1, 5):
+    new_track = current_path + "symphony_1_" + str(i) + ".mid"
+    note_list = clean_notes(new_track)
+    markov_chain = make_markov(note_list)
+    get_tempo(new_track)
 
 new_song = generate_song(markov_chain, total_notes)
+# print(new_song)
 make_new_midi(new_song, current_path, tempo)
