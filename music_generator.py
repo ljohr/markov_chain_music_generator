@@ -1,46 +1,37 @@
 import mido
 import random
 
-current_path = "/Users/lilly/Desktop/projects/markov_chain_music_generator/"
+current_path = "/Users/lilly/Desktop/projects/markov_chain_music_generator/midi_files/"
 total_notes = 0
 tempo = 0
 
-def get_tempo(current_track):
-    current_track = mido.MidiFile(current_track)
-    global tempo
-    while tempo == 0:
-        for m in current_track:
-            msg = str(m)
-            if "set_tempo" in msg:
-                tempo = msg[msg.rfind('tempo') + 5:].split(' ')[0].split('=').pop()
-                tempo = tempo[:-1]
-                return tempo
-
-def clean_notes(track):
+# n = 5 for notes and time, n = 9 for velocity
+def clean_values(track, value, n):
     global total_notes
-    # first position in tracks stores all data about notes played
+    # first position in tracks stores all data about values played
     current_track = mido.MidiFile(new_track).tracks[1]
-    all_notes = []
-    # create an array containing all notes played in sequential order
+    all_values = []
+    # create an array containing all values played in sequential order
     for m in current_track:
-        total_notes += 1
+        if value == 'note':
+            total_notes += 1
         msg = str(m)
-        # print(msg)
         # add times into the dictionary 
         if 'note_on' in msg:
             # curr_note
-            curr_note = msg[msg.rfind('note') + 5:].split(' ')[0].split('=').pop()
-            all_notes.append(curr_note)
-        # print(all_notes)
-    return all_notes
+            curr_note = msg[msg.rfind(value) + n:].split(' ')[0].split('=').pop()
+            all_values.append(curr_note)
+            # print(value, curr_note)
+        # print(all_values)
+    return all_values
 
-def make_markov(note_list, n_gram=2):
+def make_markov(value_list, n_gram=2):
     markov_chain = {}
-    for i in range(len(note_list)-n_gram-1):
+    for i in range(len(value_list)-n_gram-1):
         curr_state, next_state = "", ""
         for j in range(n_gram):
-            curr_state += note_list[i + j] + " "
-            next_state += note_list[i + j + 1] + " "
+            curr_state += value_list[i + j] + " "
+            next_state += value_list[i + j + 1] + " "
         curr_state = curr_state[: -1]
         next_state = next_state[: -1]
         if curr_state not in markov_chain:
@@ -73,26 +64,32 @@ def generate_song(markov_chain, limit=total_notes/4):
         n += 1
     return new_song
 
-def make_new_midi(new_song, current_path, tempo):
+def make_new_midi(note_list, velocity_list, time_list, current_path, tempo):
     mid_new = mido.MidiFile()
     new_track = mido.MidiTrack()
     mid_new.tracks.append(new_track)
-    new_track.append(mido.MetaMessage('set_tempo', tempo=50000, time=0))
+    new_track.append(mido.MetaMessage('set_tempo', tempo=500000))
     
-    for num in range(len(new_song)):
-        current_notes = new_song[num].split(' ')
-        for note in current_notes:
-            new_track.append(mido.Message('note_on', note=int(note), velocity=random.randint(0, 50), time = random.randint(0, 474)))
-    
+    for num in range(len(note_list)):
+        current_notes = note_list[num].split(' ')
+        velocity_values = velocity_list[num].split(' ')
+        time_values = time_list[num].split(' ')
+        for i in range(0, len(current_notes)):
+            new_track.append(mido.Message('note_on', note=int(current_notes[i]), velocity=random.randint(0, 127), time = int(time_values[i])))
             
-    mid_new.save(current_path + 'mid_new.mid')
+    mid_new.save(current_path + 'new_song.mid')
 
 for i in range(1, 5):
     new_track = current_path + "symphony_1_" + str(i) + ".mid"
-    note_list = clean_notes(new_track)
-    markov_chain = make_markov(note_list)
-    get_tempo(new_track)
+    note_list = clean_values(new_track, 'note', 5)
+    time_list = clean_values(new_track, 'time', 5)
+    velocity_list = clean_values(new_track, 'velocity', 9)
+    markov_chain_n = make_markov(note_list)
+    markov_chain_t = make_markov(time_list)
+    markov_chain_v = make_markov(velocity_list)
 
-new_song = generate_song(markov_chain, total_notes)
+note_list = generate_song(markov_chain_n, total_notes)
+time_list = generate_song(markov_chain_t, total_notes)
+velocity_list = generate_song(markov_chain_v, total_notes)
 # print(new_song)
-make_new_midi(new_song, current_path, tempo)
+make_new_midi(note_list, velocity_list, time_list, current_path, 2500)
