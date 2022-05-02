@@ -96,9 +96,6 @@ def make_new_midi(note_list, velocity_list, time_list, current_path, composer):
         for i in range(0, len(current_notes)):
             cur_vel = int(velocity_values[i])
             cur_time = int(time_values[i])
-            # if velocity is inaudible, do not play the note
-            if cur_vel < 50:
-                cur_vel = 0
             # if time between notes is too tight, increase gap
             if abs(cur_time - last_time) < 100:
                 cur_time += 100
