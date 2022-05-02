@@ -1,31 +1,38 @@
 import mido
 import random
+import os
 
-current_path = "/Users/lilly/Desktop/projects/markov_chain_music_generator/midi_files/"
-total_notes = 0
-cur_tempo = int(mido.bpm2tempo(120))
+#to get the current working directory so up to /markov_chain_music_generator/
+current_path = os.path.abspath(os.path.dirname(__file__)) + "/"
+
+midi_path = "midi_files/"
+new_song_path = "new_songs/"
+
+cur_tempo = int(mido.bpm2tempo(130))    # set bpm
+new_file_notes = 1500                   # set number of notes in new file
+n_gram = 4                              # set number of notes to consider for markov chain
 
 # n = 5 for notes and time, n = 9 for velocity
-def clean_values(track, value, n):
+def clean_values(new_track, value, n):
     global total_notes
-    # first position in tracks stores all data about values played
-    current_track = mido.MidiFile(new_track).tracks[1]
+    # not all midi files store the note information in the same place 
+    # so loop through and find the correct array
+    curr_track = mido.MidiFile(new_track).tracks
+    for i in range(0, len(curr_track)-1):
+        if "note_on" in str(curr_track[i]):
+            current_track = curr_track[i]
     all_values = []
     # create an array containing all values played in sequential order
     for m in current_track:
-        if value == 'note':
-            total_notes += 1
         msg = str(m)
         # add times into the dictionary 
-        if 'note_on' in msg:
+        if "note_on" in msg:
             # curr_note
-            curr_note = msg[msg.rfind(value) + n:].split(' ')[0].split('=').pop()
+            curr_note = msg[msg.rfind(value) + n:].split(" ")[0].split("=").pop()
             all_values.append(curr_note)
-            # print(value, curr_note)
-        # print(all_values)
     return all_values
 
-def make_markov(value_list, n_gram=3):
+def make_markov(value_list, n_gram):
     markov_chain = {}
     for i in range(len(value_list)-n_gram-1):
         curr_state, next_state = "", ""
@@ -49,93 +56,125 @@ def make_markov(value_list, n_gram=3):
             markov_chain[curr_state][state] = count/total
     return markov_chain
 
-def generate_song(markov_chain, limit=total_notes):
+# total notes in a song = all notes / all files
+def generate_song(markov_chain, new_file_notes):
     start_index = random.randint(0, len(markov_chain)-1)
     start = list(markov_chain)[start_index]
-    while int(start[0:2]) < 48 or int(start[0:2]) > 67:
+    while int(start[0:2]) < 40 or int(start[0:2]) > 67:
         start_index = random.randint(0, len(markov_chain)-1)
         start = list(markov_chain)[start_index]
-
-    print("start is", start)
     n = 0 
     curr_state = start
     next_state = None
     new_song = []
 
-    while n < limit:
+    while n < new_file_notes:
+        # if a string of notes never leads to another (last notes in a file)
+        try: 
+            markov_chain[curr_state].keys()
+        # genenerate a new starting point
+        except KeyError as e:
+            curr_state = list(markov_chain)[random.randint(0, len(markov_chain)-1)]
+
         next_state = random.choices(list(markov_chain[curr_state].keys()), list(markov_chain[curr_state].values()))
         curr_state = next_state[0]
         new_song.append(curr_state)
         n += 1
     return new_song
 
-def make_new_midi(note_list, velocity_list, time_list, current_path):
+def make_new_midi(note_list, velocity_list, time_list, current_path, composer):
     mid_new = mido.MidiFile()
     new_track = mido.MidiTrack()
     mid_new.tracks.append(new_track)
-    new_track.append(mido.MetaMessage('set_tempo', tempo=cur_tempo))
+    new_track.append(mido.MetaMessage("set_tempo", tempo=cur_tempo))
     
     for num in range(len(note_list)):
-        current_notes = note_list[num].split(' ')
-        velocity_values = velocity_list[num].split(' ')
-        time_values = time_list[num].split(' ')
-        # print(time_values)
-        count = 0
+        current_notes = note_list[num].split(" ")
+        velocity_values = velocity_list[num].split(" ")
+        time_values = time_list[num].split(" ")
         last_time = 0
+        
         for i in range(0, len(current_notes)):
-            # print("current_notes", current_notes)
-            # print("time_values  ", time_values)
-
-            # print("current_note[i]", current_notes[i])
-            # print("time_value[i]  ", time_values[i])
-            cur_vel = random.randint(0, 127)
+            cur_vel = int(velocity_values[i])
             cur_time = int(time_values[i])
-            # if i % 2 == 0:
-            #     cur_time += 100
+            # if velocity is inaudible, do not play the note
             if cur_vel < 50:
                 cur_vel = 0
+            # if time between notes is too tight, increase gap
             if abs(cur_time - last_time) < 100:
                 cur_time += 100
-            # if count > 15:
-            #     count = 0
-            #     cur_vel = 0
-            #     cur_time = 480
-            # if cur_time > 360:
-            #     print(cur_time)
-            #     cur_time = random.randint(0, 127)
             
-            new_track.append(mido.Message('note_on', note=int(current_notes[i]), velocity=cur_vel, time=cur_time))
-            
+            new_track.append(mido.Message("note_on", note=int(current_notes[i]), velocity=cur_vel, time=cur_time))
             last_time = cur_time
                 
             
-    mid_new.save(current_path + 'new_song.mid')
+    mid_new.save(current_path + new_song_path + "new_song_" + composer + ".mid" )
 
-for i in range(1, 5):
-    new_track = current_path + "symphony_1_" + str(i) + ".mid"
-    # new_track = current_path + "ballade23.mid"
-    # new_track = current_path + "ballade38.mid"
-    # new_track = current_path + "project2.mid"
-    note_list = clean_values(new_track, 'note', 5)
-    time_list = clean_values(new_track, 'time', 5)
-    #print("notes", note_list, "time", time_list)
-    # print(time_list)
-    velocity_list = clean_values(new_track, 'velocity', 9)
-    markov_chain_n = make_markov(note_list)
-    # print(markov_chain_n)
-    markov_chain_t = make_markov(time_list)
-    # print(markov_chain_t)
-    #print(markov_chain_t)
-    # for time in markov_chain_t:
-    #     if int(time) > 120:
-    #         print(time)
-    markov_chain_v = make_markov(velocity_list)
+# find all midi files in a given folder
+def get_midi_files(composer):
+    midi_files = []
+    for r, d, f in os.walk(current_path + midi_path + composer):
+        for file in f:
+            if file.endswith(".mid"):
+                midi_files.append(file)
+    return midi_files
 
-note_list = generate_song(markov_chain_n, total_notes)
-print(max(markov_chain_t))
-print(min(markov_chain_n))
-time_list = generate_song(markov_chain_t, total_notes)
-# print(time_list)
-velocity_list = generate_song(markov_chain_v, total_notes)
-# print(new_song)
-make_new_midi(note_list, velocity_list, time_list, current_path)
+def run_program(composer):
+    composer_path = composer + "/"
+    midi_files = get_midi_files(composer_path)
+
+    for file in midi_files:
+        new_track = current_path + midi_path + composer_path + file
+        note_list = clean_values(new_track, "note", 5)
+        time_list = clean_values(new_track, "time", 5)
+        velocity_list = clean_values(new_track, "velocity", 9)
+        markov_chain_n = make_markov(note_list, n_gram)
+        markov_chain_t = make_markov(time_list, n_gram)
+        markov_chain_v = make_markov(velocity_list, n_gram)
+
+    note_list = generate_song(markov_chain_n, new_file_notes)
+    time_list = generate_song(markov_chain_t, new_file_notes)
+    velocity_list = generate_song(markov_chain_v, new_file_notes)
+    make_new_midi(note_list, velocity_list, time_list, current_path, composer)
+
+
+
+#main section
+print("♫ Welcome to the Markov Chain Music Generator ♫")
+print("Listen to a new song in the style of (1) Beethoven, (2) Brahms, (3) Chopin, (4) Liszt, or (5) Mendelssohn")
+print("Enter a number between 1 to 5 for a song in the style of your favorite composer: ")
+
+while True:
+    try:
+        user_input = input()
+        if user_input == "q":
+            print("Exiting program")
+            break
+        user_input = int(user_input)
+        composer = ""
+        if user_input == 1:
+            composer = "beethoven"
+        elif user_input == 2:
+            composer = "brahms"
+        elif user_input == 3:
+            composer = "chopin"
+        elif user_input == 4:
+            composer = "liszt"
+        elif user_input == 5:
+            composer = "mendelssohn"
+        print("♫ Generating Song ♫")
+        run_program(composer)
+    except ValueError:
+        print("Wrong input")
+        print("Enter a number between 1 to 5 for a song in the style of your favorite composer")
+        print("(1) Beethoven, (2) Brahms, (3) Chopin, (4) Liszt, or (5) Mendelssohn")
+        print("Or enter q to quit")
+        continue
+    else:
+        print("♫ New song generated! ♫")
+        print("Find song in " + current_path + new_song_path)
+        break
+
+
+
+
