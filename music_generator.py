@@ -14,7 +14,6 @@ n_gram = 4                              # set number of notes to consider for ma
 
 # n = 5 for notes and time, n = 9 for velocity
 def clean_values(new_track, value, n):
-    global total_notes
     # not all midi files store the note information in the same place 
     # so loop through and find the correct array
     curr_track = mido.MidiFile(new_track).tracks
@@ -107,7 +106,6 @@ def make_new_midi(note_list, velocity_list, time_list, current_path, composer):
             new_track.append(mido.Message("note_on", note=int(current_notes[i]), velocity=cur_vel, time=cur_time))
             last_time = cur_time
                 
-            
     mid_new.save(current_path + new_song_path + "new_song_" + composer + ".mid" )
 
 # find all midi files in a given folder
@@ -136,8 +134,6 @@ def run_program(composer):
     time_list = generate_song(markov_chain_t, new_file_notes)
     velocity_list = generate_song(markov_chain_v, new_file_notes)
     make_new_midi(note_list, velocity_list, time_list, current_path, composer)
-
-
 
 #main section
 print("♫ Welcome to the Markov Chain Music Generator ♫")
@@ -174,7 +170,3 @@ while True:
         print("♫ New song generated! ♫")
         print("Find song in " + current_path + new_song_path)
         break
-
-
-
-
