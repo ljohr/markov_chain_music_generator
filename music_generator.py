@@ -56,12 +56,13 @@ def make_markov(value_list, n_gram):
     return markov_chain
 
 # total notes in a song = all notes / all files
-def generate_song(markov_chain, new_file_notes):
+def generate_song(markov_chain, new_file_notes, notes=False):
     start_index = random.randint(0, len(markov_chain)-1)
     start = list(markov_chain)[start_index]
-    while int(start[0:2]) < 40 or int(start[0:2]) > 67:
-        start_index = random.randint(0, len(markov_chain)-1)
-        start = list(markov_chain)[start_index]
+    if notes == True:
+            while int(start[0:2]) < 40 or int(start[0:2]) > 67:
+                start_index = random.randint(0, len(markov_chain)-1)
+                start = list(markov_chain)[start_index]
     n = 0 
     curr_state = start
     next_state = None
@@ -127,7 +128,7 @@ def run_program(composer):
         markov_chain_t = make_markov(time_list, n_gram)
         markov_chain_v = make_markov(velocity_list, n_gram)
 
-    note_list = generate_song(markov_chain_n, new_file_notes)
+    note_list = generate_song(markov_chain_n, new_file_notes, True)
     time_list = generate_song(markov_chain_t, new_file_notes)
     velocity_list = generate_song(markov_chain_v, new_file_notes)
     make_new_midi(note_list, velocity_list, time_list, current_path, composer)
