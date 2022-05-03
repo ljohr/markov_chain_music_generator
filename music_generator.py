@@ -140,7 +140,7 @@ def run_program(composer):
 #main section
 print("♫ Welcome to the Markov Chain Music Generator ♫")
 print("Listen to a new song in the style of (1) Beethoven, (2) Brahms, (3) Chopin, (4) Liszt, or (5) Mendelssohn")
-print("Enter a number between 1 to 5 for a song in the style of your favorite composer: ")
+print("Enter a number between 1 to 5 to generate a song in the style of your favorite composer: ")
 
 while True:
     try:
@@ -164,7 +164,7 @@ while True:
         run_program(composer)
     except ValueError:
         print("Wrong input")
-        print("Enter a number between 1 to 5 for a song in the style of your favorite composer")
+        print("Enter a number between 1 to 5 to generate a song in the style of your favorite composer")
         print("(1) Beethoven, (2) Brahms, (3) Chopin, (4) Liszt, or (5) Mendelssohn")
         print("Or enter q to quit")
         continue
