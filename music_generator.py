@@ -2,7 +2,7 @@ import mido
 import random
 import os
 
-#to get the current working directory so up to /markov_chain_music_generator/
+# get the current working directory so up to /markov_chain_music_generator/
 current_path = os.path.abspath(os.path.dirname(__file__)) + "/"
 
 midi_path = "midi_files/"
@@ -11,6 +11,9 @@ new_song_path = "new_songs/"
 cur_tempo = int(mido.bpm2tempo(130))    # set bpm
 new_file_notes = 1500                   # set number of notes in new file
 n_gram = 4                              # set number of notes to consider for markov chain
+
+note_len = 5
+vel_len = 9
 
 # n = 5 for notes and time, n = 9 for velocity
 def clean_values(new_track, value, n):
@@ -59,6 +62,7 @@ def make_markov(value_list, n_gram):
 def generate_song(markov_chain, new_file_notes, notes=False):
     start_index = random.randint(0, len(markov_chain)-1)
     start = list(markov_chain)[start_index]
+    # if reading array of notes, choose from C3 to G4
     if notes == True:
             while int(start[0:2]) < 40 or int(start[0:2]) > 67:
                 start_index = random.randint(0, len(markov_chain)-1)
@@ -121,9 +125,9 @@ def run_program(composer):
 
     for file in midi_files:
         new_track = current_path + midi_path + composer_path + file
-        note_list = clean_values(new_track, "note", 5)
-        time_list = clean_values(new_track, "time", 5)
-        velocity_list = clean_values(new_track, "velocity", 9)
+        note_list = clean_values(new_track, "note", note_len)
+        time_list = clean_values(new_track, "time", note_len)
+        velocity_list = clean_values(new_track, "velocity", vel_len)
         markov_chain_n = make_markov(note_list, n_gram)
         markov_chain_t = make_markov(time_list, n_gram)
         markov_chain_v = make_markov(velocity_list, n_gram)
