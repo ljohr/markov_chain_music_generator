@@ -8,9 +8,14 @@ current_path = os.path.abspath(os.path.dirname(__file__)) + "/"
 midi_path = "midi_files/"
 new_song_path = "new_songs/"
 
+# check new_song_path exists and make folder if not
+if not os.path.exists(current_path + new_song_path):
+    os.makedirs(current_path + new_song_path)
+
+
 cur_tempo = int(mido.bpm2tempo(130))    # set bpm
 new_file_notes = 1500                   # set number of notes in new file
-n_gram = 4                              # set number of notes to consider for markov chain
+n_gram = 4                              # set number of notes/durations/velocities to consider for markov chains
 
 note_len = 5
 vel_len = 9
@@ -58,15 +63,27 @@ def make_markov(value_list, n_gram):
             markov_chain[curr_state][state] = count/total
     return markov_chain
 
-# total notes in a song = all notes / all files
-def generate_song(markov_chain, new_file_notes, notes=False):
+def generate_song(markov_chain, new_file_notes, type):
     start_index = random.randint(0, len(markov_chain)-1)
     start = list(markov_chain)[start_index]
+    min = 0
+    max = 0
     # if reading array of notes, choose from C3 to G4
-    if notes == True:
-            while int(start[0:2]) < 40 or int(start[0:2]) > 67:
-                start_index = random.randint(0, len(markov_chain)-1)
-                start = list(markov_chain)[start_index]
+    if type == "notes":
+        min = 40
+        max = 67
+    # if velocity too loud or quiet, set new velocity
+    elif type == "velocity":
+        min = 60
+        max = 90
+    # if time too long or short, set new time
+    elif type == "time":
+        min = 50
+        max = 300
+
+    while int(start[0:2]) < min or int(start[0:2]) > max:
+        start_index = random.randint(0, len(markov_chain)-1)
+        start = list(markov_chain)[start_index]
     n = 0 
     curr_state = start
     next_state = None
@@ -77,7 +94,7 @@ def generate_song(markov_chain, new_file_notes, notes=False):
         try: 
             markov_chain[curr_state].keys()
         # genenerate a new starting point
-        except KeyError as e:
+        except KeyError:
             curr_state = list(markov_chain)[random.randint(0, len(markov_chain)-1)]
 
         next_state = random.choices(list(markov_chain[curr_state].keys()), list(markov_chain[curr_state].values()))
@@ -99,13 +116,12 @@ def make_new_midi(note_list, velocity_list, time_list, current_path, composer):
         last_time = 0
         
         for i in range(0, len(current_notes)):
-            cur_vel = int(velocity_values[i])
             cur_time = int(time_values[i])
             # if time between notes is too tight, increase gap
             if abs(cur_time - last_time) < 100:
                 cur_time += 100
             
-            new_track.append(mido.Message("note_on", note=int(current_notes[i]), velocity=cur_vel, time=cur_time))
+            new_track.append(mido.Message("note_on", note=int(current_notes[i]), velocity=int(velocity_values[i]), time=cur_time))
             last_time = cur_time
                 
     mid_new.save(current_path + new_song_path + "new_song_" + composer + ".mid" )
@@ -132,9 +148,9 @@ def run_program(composer):
         markov_chain_t = make_markov(time_list, n_gram)
         markov_chain_v = make_markov(velocity_list, n_gram)
 
-    note_list = generate_song(markov_chain_n, new_file_notes, True)
-    time_list = generate_song(markov_chain_t, new_file_notes)
-    velocity_list = generate_song(markov_chain_v, new_file_notes)
+    note_list = generate_song(markov_chain_n, new_file_notes, "notes")
+    time_list = generate_song(markov_chain_t, new_file_notes, "time")
+    velocity_list = generate_song(markov_chain_v, new_file_notes, "velocity")
     make_new_midi(note_list, velocity_list, time_list, current_path, composer)
 
 #main section
