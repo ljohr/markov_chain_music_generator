@@ -8,6 +8,11 @@ current_path = os.path.abspath(os.path.dirname(__file__)) + "/"
 midi_path = "midi_files/"
 new_song_path = "new_songs/"
 
+# check if midi_files folder exists
+if not os.path.exists(current_path + midi_path):
+    print("midi_files folder is missing")
+    exit(1)
+
 # check new_song_path exists and make folder if not
 if not os.path.exists(current_path + new_song_path):
     os.makedirs(current_path + new_song_path)
