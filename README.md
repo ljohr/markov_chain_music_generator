@@ -1,5 +1,10 @@
 # Markov Chain Music Generator
 
+## Demo
+
+https://github.com/ljohr/markov_chain_music_generator/assets/46297075/735436a4-e19b-4e46-ac35-6487ed140c6d
+
+
 ## About This Program
 This program generates classical piano pieces in the style of Beethoven, Brahms, Chopin, Liszt, or Mendelssohn. Classical piano pieces in midi file format from the Kunst Der Fuge classical music library were used. The Mido Library was used to parse midi files into text. This allowed us to treat the notes played, duration, and velocity of the note played (loudness) as simple text values that we could generate Markov Chains from.
 
@@ -17,7 +22,3 @@ The generate_song function begins at a random sequence of notes and creates a ne
 python music_generator.py
 ```
 3. A midi file in the style of Beethoven, Brahms, Chopin, Liszt, or Mendelssohn will be generated in the new_songs directory.
-
-## Demo
-
-https://github.com/ljohr/markov_chain_music_generator/assets/46297075/735436a4-e19b-4e46-ac35-6487ed140c6d
